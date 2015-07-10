@@ -183,6 +183,7 @@ c3_chart_internal_fn.getDefaultConfig = function () {
         // progressradial
         progressradial_label_show: true,
         progressradial_label_format: undefined,
+        progressradial_emptyarc_ratio: 1,
         progressradial_min: 0,
         progressradial_max: 100,
         progressradial_units: undefined,

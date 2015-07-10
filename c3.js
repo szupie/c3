@@ -1238,6 +1238,7 @@
             // progressradial
             progressradial_label_show: true,
             progressradial_label_format: undefined,
+            progressradial_emptyarc_ratio: 1,
             progressradial_min: 0,
             progressradial_max: 100,
             progressradial_units: undefined,
@@ -4787,6 +4788,21 @@
         return newArc;
     };
 
+    c3_chart_internal_fn.getSvgArcResized = function (ratio) {
+        var $$ = this, config = $$.config,
+            w = config.gauge_width || config.donut_width || config.progressradial_width,
+            arc = $$.d3.svg.arc().outerRadius($$.radius-(w/2-w/2*ratio)).innerRadius($$.innerRadius+w/2-w/2*ratio),
+            newArc = function (d, withoutUpdate) {
+                var updated;
+                if (withoutUpdate) { return arc(d); } // for interpolate
+                updated = $$.updateAngle(d);
+                return updated ? arc(updated) : "M 0 0";
+            };
+        // TODO: extends all function
+        newArc.centroid = arc.centroid;
+        return newArc;
+    };
+
     c3_chart_internal_fn.getSvgArcExpanded = function (rate) {
         var $$ = this,
             arc = $$.d3.svg.arc().outerRadius($$.radiusExpanded * (rate ? rate : 1)).innerRadius($$.innerRadius);
@@ -5136,7 +5152,7 @@
                         startAngle: config.progressradial_startangle,
                         endAngle: config.progressradial_startangle+config.progressradial_angles
                     };
-                    return $$.getArc(d, true, true);
+                    return $$.getSvgArcResized(config.progressradial_emptyarc_ratio)(d, true);
                 });
             $$.arcs.select('.' + CLASS.chartArcsGaugeUnit)
                 .attr("dy", ".75em")
