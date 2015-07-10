@@ -166,6 +166,7 @@ c3_chart_internal_fn.initChartElements = function () {
     if (this.initLine) { this.initLine(); }
     if (this.initArc) { this.initArc(); }
     if (this.initGauge) { this.initGauge(); }
+    if (this.initProgressRadial) { this.initProgressRadial(); }
     if (this.initText) { this.initText(); }
 };
 
@@ -212,7 +213,7 @@ c3_chart_internal_fn.initWithData = function (data) {
     }
 
     // when gauge, hide legend // TODO: fix
-    if ($$.hasType('gauge')) {
+    if ($$.hasType('gauge') || $$.hasType('progress-radial')) {
         config.legend_show = false;
     }
 
@@ -407,7 +408,7 @@ c3_chart_internal_fn.updateSizes = function () {
     $$.arcWidth = $$.width - ($$.isLegendRight ? legendWidth + 10 : 0);
     $$.arcHeight = $$.height - ($$.isLegendRight ? 0 : 10);
     if ($$.hasType('gauge')) {
-        $$.arcHeight += $$.height-($$.height*config.gauge_customheight) - $$.getGaugeLabelHeight();
+        $$.arcHeight += $$.height - $$.getGaugeLabelHeight();
     }
     if ($$.updateRadius) { $$.updateRadius(); }
 

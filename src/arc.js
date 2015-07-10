@@ -10,11 +10,11 @@ c3_chart_internal_fn.initPie = function () {
 
 c3_chart_internal_fn.updateRadius = function () {
     var $$ = this, config = $$.config,
-        w = config.gauge_width || config.donut_width;
+        w = config.gauge_width || config.donut_width || config.progressradial_width;
     $$.radiusExpanded = Math.min($$.arcWidth, $$.arcHeight) / 2;
     $$.radius = $$.radiusExpanded * 0.95;
     $$.innerRadiusRatio = w ? ($$.radius - w) / $$.radius : 0.6;
-    $$.innerRadius = $$.hasType('donut') || $$.hasType('gauge') ? $$.radius * $$.innerRadiusRatio : 0;
+    $$.innerRadius = $$.hasType('donut') || $$.hasType('gauge') || $$.hasType('progress-radial') ? $$.radius * $$.innerRadiusRatio : 0;
 };
 
 c3_chart_internal_fn.updateArc = function () {
@@ -43,10 +43,16 @@ c3_chart_internal_fn.updateAngle = function (d) {
         d.endAngle = d.startAngle;
     }
     if ($$.isGaugeType(d.data)) {
-        gTic = config.gauge_angles / (gMax - gMin);
-        gValue = d.value - gMin;
-        d.startAngle = config.gauge_startangle;
-        d.endAngle = config.gauge_startangle + gTic * gValue;
+        gTic = (Math.PI) / (gMax - gMin);
+        gValue = d.value < gMin ? 0 : d.value < gMax ? d.value - gMin : (gMax - gMin);
+        d.startAngle = -1 * (Math.PI / 2);
+        d.endAngle = d.startAngle + gTic * gValue;
+    }
+    if ($$.isProgressRadialType(d.data)) {
+        gTic = config.progressradial_angles / (config.progressradial_max - config.progressradial_min);
+        gValue = d.value - config.progressradial_min;
+        d.startAngle = config.progressradial_startangle;
+        d.endAngle = config.progressradial_startangle + gTic * gValue;
     }
     return found ? d : null;
 };
@@ -82,7 +88,7 @@ c3_chart_internal_fn.getArc = function (d, withoutUpdate, force) {
 c3_chart_internal_fn.transformForArcLabel = function (d) {
     var $$ = this,
         updated = $$.updateAngle(d), c, x, y, h, ratio, translate = "";
-    if (updated && !$$.hasType('gauge')) {
+    if (updated && !($$.hasType('gauge') || $$.hasType('progress-radial'))) {
         c = this.svgArc.centroid(updated);
         x = isNaN(c[0]) ? 0 : c[0];
         y = isNaN(c[1]) ? 0 : c[1];
@@ -96,8 +102,7 @@ c3_chart_internal_fn.transformForArcLabel = function (d) {
 
 c3_chart_internal_fn.getArcRatio = function (d) {
     var $$ = this, config = $$.config,
-        gAngles = config.gauge_angles,
-        whole = $$.hasType('gauge') ? gAngles : (Math.PI * 2);
+       whole = $$.hasType('gauge') ? Math.PI : $$.hasType('progress-radial') ? config.progressradial_angles : (Math.PI * 2);
     return d ? (d.endAngle - d.startAngle) / whole : null;
 };
 
@@ -118,7 +123,7 @@ c3_chart_internal_fn.textForArcLabel = function (d) {
     value = updated ? updated.value : null;
     ratio = $$.getArcRatio(updated);
     id = d.data.id;
-    if (! $$.hasType('gauge') && ! $$.meetsArcLabelThreshold(ratio)) { return ""; }
+    if ( !($$.hasType('gauge') || $$.hasType('progress-radial')) && ! $$.meetsArcLabelThreshold(ratio)) { return ""; }
     format = $$.getArcLabelFormat();
     return format ? format(value, ratio, id) : $$.defaultArcValueFormat(value, ratio);
 };
@@ -179,6 +184,8 @@ c3_chart_internal_fn.expandDuration = function (id) {
         return config.donut_expand_duration;
     } else if ($$.isGaugeType(id)) {
         return config.gauge_expand_duration;
+    } else if ($$.isProgressRadialType(id)) {
+        return config.progressradial_expand_duration;
     } else if ($$.isPieType(id)) {
         return config.pie_expand_duration;
     } else {
@@ -191,6 +198,7 @@ c3_chart_internal_fn.shouldExpand = function (id) {
     var $$ = this, config = $$.config;
     return ($$.isDonutType(id) && config.donut_expand) ||
            ($$.isGaugeType(id) && config.gauge_expand) ||
+           ($$.isProgressRadialType(id) && config.progressradial_expand) ||
            ($$.isPieType(id) && config.pie_expand);
 };
 
@@ -201,7 +209,7 @@ c3_chart_internal_fn.shouldShowArcLabel = function () {
     } else if ($$.hasType('pie')) {
         shouldShow = config.pie_label_show;
     }
-    // when gauge, always true
+    // when gauge or progress radial, always true
     return shouldShow;
 };
 
@@ -218,6 +226,8 @@ c3_chart_internal_fn.getArcLabelFormat = function () {
         format = config.gauge_label_format;
     } else if ($$.hasType('donut')) {
         format = config.donut_label_format;
+    } else if ($$.hasType('progress-radial')) {
+        format = config.progressradial_label_format;
     }
     return format;
 };
@@ -232,8 +242,7 @@ c3_chart_internal_fn.updateTargetsForArc = function (targets) {
         mainPieUpdate, mainPieEnter,
         classChartArc = $$.classChartArc.bind($$),
         classArcs = $$.classArcs.bind($$),
-        classFocus = $$.classFocus.bind($$),
-        config = $$.config;
+        classFocus = $$.classFocus.bind($$);
     mainPieUpdate = main.select('.' + CLASS.chartArcs).selectAll('.' + CLASS.chartArc)
         .data($$.pie(targets))
         .attr("class", function (d) { return classChartArc(d) + classFocus(d.data); });
@@ -242,7 +251,7 @@ c3_chart_internal_fn.updateTargetsForArc = function (targets) {
     mainPieEnter.append('g')
         .attr('class', classArcs);
     mainPieEnter.append("text")
-        .attr("dy", $$.hasType('gauge') && config.gauge_label_offset ? "-.1em" : ".35em")
+        .attr("dy", $$.hasType('gauge') ? "-.1em" : $$.hasType('progress-radial') ? "0" : ".35em")
         .style("opacity", 0)
         .style("text-anchor", "middle")
         .style("pointer-events", "none");
@@ -274,11 +283,13 @@ c3_chart_internal_fn.redrawArc = function (duration, durationForExit, withTransf
         .each(function (d) {
             if ($$.isGaugeType(d.data)) {
                 d.startAngle = d.endAngle = -1 * (Math.PI / 2);
+            } else if ($$.isProgressRadialType(d.data)) {
+                d.startAngle = d.endAngle = config.progressradial_startangle;
             }
             this._current = d;
         });
     mainArc
-        .attr("transform", function (d) { return !$$.isGaugeType(d.data) && withTransform ? "scale(0)" : ""; })
+        .attr("transform", function (d) { return !($$.isGaugeType(d.data) || $$.isProgressRadialType(d.data)) && withTransform ? "scale(0)" : ""; })
         .style("opacity", function (d) { return d === this._current ? 0 : 1; })
         .on('mouseover', config.interaction_enabled ? function (d) {
             var updated, arcData;
@@ -369,22 +380,22 @@ c3_chart_internal_fn.redrawArc = function (duration, durationForExit, withTransf
         .remove();
     main.selectAll('.' + CLASS.chartArc).select('text')
         .style("opacity", 0)
-        .attr('class', function (d) { return $$.isGaugeType(d.data) ? CLASS.gaugeValue : ''; })
+        .attr('class', function (d) { return $$.isGaugeType(d.data) || $$.isProgressRadialType(d.data) ? CLASS.gaugeValue : ''; })
         .text($$.textForArcLabel.bind($$))
         .attr("transform", $$.transformForArcLabel.bind($$))
-        .style('font-size', function (d) { return $$.isGaugeType(d.data) ? Math.round($$.radius / 5) + 'px' : ''; })
+        .style('font-size', function (d) { return $$.isGaugeType(d.data) || $$.isProgressRadialType(d.data) ? Math.round($$.radius / 5) + 'px' : ''; })
       .transition().duration(duration)
         .style("opacity", function (d) { return $$.isTargetToShow(d.data.id) && $$.isArcType(d.data) ? 1 : 0; });
     main.select('.' + CLASS.chartArcsTitle)
-        .style("opacity", $$.hasType('donut') || $$.hasType('gauge') ? 1 : 0);
+        .style("opacity", $$.hasType('donut') || $$.hasType('gauge') || $$.hasType('progress-radial') ? 1 : 0);
 
     if ($$.hasType('gauge')) {
         $$.arcs.select('.' + CLASS.chartArcsBackground)
             .attr("d", function () {
                 var d = {
                     data: [{value: config.gauge_max}],
-                    startAngle: config.gauge_startangle,
-                    endAngle: config.gauge_startangle+config.gauge_angles
+                    startAngle: -1 * (Math.PI / 2),
+                    endAngle: Math.PI / 2
                 };
                 return $$.getArc(d, true, true);
             });
@@ -399,6 +410,21 @@ c3_chart_internal_fn.redrawArc = function (duration, durationForExit, withTransf
             .attr("dx", $$.innerRadius + (($$.radius - $$.innerRadius) / 2) + "px")
             .attr("dy", "1.2em")
             .text(config.gauge_label_show ? config.gauge_max : '');
+    }
+
+    if ($$.hasType('progress-radial')) {
+        $$.arcs.select('.' + CLASS.chartArcsBackground)
+            .attr("d", function () {
+                var d = {
+                    data: [{value: config.progressradial_max}],
+                    startAngle: config.progressradial_startangle,
+                    endAngle: config.progressradial_startangle+config.progressradial_angles
+                };
+                return $$.getArc(d, true, true);
+            });
+        $$.arcs.select('.' + CLASS.chartArcsGaugeUnit)
+            .attr("dy", ".75em")
+            .text(config.progressradial_label_show ? config.progressradial_units : '');
     }
 };
 c3_chart_internal_fn.initGauge = function () {
@@ -416,6 +442,17 @@ c3_chart_internal_fn.initGauge = function () {
             .style("pointer-events", "none");
         arcs.append("text")
             .attr("class", CLASS.chartArcsGaugeMax)
+            .style("text-anchor", "middle")
+            .style("pointer-events", "none");
+    }
+};
+c3_chart_internal_fn.initProgressRadial = function () {
+    var arcs = this.arcs;
+    if (this.hasType('progress-radial')) {
+        arcs.append('path')
+            .attr("class", CLASS.chartArcsBackground);
+        arcs.append("text")
+            .attr("class", CLASS.chartArcsGaugeUnit)
             .style("text-anchor", "middle")
             .style("pointer-events", "none");
     }

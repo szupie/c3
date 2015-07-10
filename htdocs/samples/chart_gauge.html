@@ -85,18 +85,16 @@
               columns: [
                   ['data', 33.0]
               ],
-              type: 'progressRadial',
+              type: 'progress-radial',
           },
-          gauge: {
+          progressradial: {
             label: {
-              show: false,
-              offset: false
+              show: false
             },
               min: 0,
               max: 100,
               angles: Math.PI*2,
               startangle: 0,
-              customheight: 1,
               width: 5
           }
       });
@@ -104,22 +102,22 @@
       var cycleDemo = function () {
         setInterval(function() {
           setTimeout(function () {
-              chart2.load({
+              chart3.load({
                 columns: [[ 'data', 33 ]]
               });
           }, 250*2);
           setTimeout(function () {
-              chart2.load({
+              chart3.load({
                 columns: [[ 'data', 66 ]]
               });
           }, 500*2);
           setTimeout(function () {
-              chart2.load({
+              chart3.load({
                 columns: [[ 'data', 75 ]]
               });
           }, 750*2);
           setTimeout(function () {
-              chart2.load({
+              chart3.load({
                 columns: [[ 'data', 125 ]]
               });
           }, 1000*2);

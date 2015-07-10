@@ -28,7 +28,7 @@ c3_chart_internal_fn.hasType = function (type, targets) {
     return has;
 };
 c3_chart_internal_fn.hasArcType = function (targets) {
-    return this.hasType('pie', targets) || this.hasType('donut', targets) || this.hasType('gauge', targets);
+    return this.hasType('pie', targets) || this.hasType('donut', targets) || this.hasType('gauge', targets) || this.hasType('progress-radial', targets);
 };
 c3_chart_internal_fn.isLineType = function (d) {
     var config = this.config, id = isString(d) ? d : d.id;
@@ -62,12 +62,16 @@ c3_chart_internal_fn.isGaugeType = function (d) {
     var id = isString(d) ? d : d.id;
     return this.config.data_types[id] === 'gauge';
 };
+c3_chart_internal_fn.isProgressRadialType = function (d) {
+    var id = isString(d) ? d : d.id;
+    return this.config.data_types[id] === 'progress-radial';
+};
 c3_chart_internal_fn.isDonutType = function (d) {
     var id = isString(d) ? d : d.id;
     return this.config.data_types[id] === 'donut';
 };
 c3_chart_internal_fn.isArcType = function (d) {
-    return this.isPieType(d) || this.isDonutType(d) || this.isGaugeType(d);
+    return this.isPieType(d) || this.isDonutType(d) || this.isGaugeType(d) || this.isProgressRadialType(d);
 };
 c3_chart_internal_fn.lineData = function (d) {
     return this.isLineType(d) ? [d] : [];
