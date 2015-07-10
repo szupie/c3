@@ -174,12 +174,16 @@ c3_chart_internal_fn.getDefaultConfig = function () {
         // gauge
         gauge_label_show: true,
         gauge_label_format: undefined,
+        gauge_label_offset: true,
         gauge_min: 0,
         gauge_max: 100,
         gauge_units: undefined,
         gauge_width: undefined,
         gauge_expand: {},
         gauge_expand_duration: 50,
+        gauge_angles: Math.PI,
+        gauge_startangle: -1 * (Math.PI / 2),
+        gauge_customheight: 0.5,
         // donut
         donut_label_show: true,
         donut_label_format: undefined,

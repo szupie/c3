@@ -407,7 +407,7 @@ c3_chart_internal_fn.updateSizes = function () {
     $$.arcWidth = $$.width - ($$.isLegendRight ? legendWidth + 10 : 0);
     $$.arcHeight = $$.height - ($$.isLegendRight ? 0 : 10);
     if ($$.hasType('gauge')) {
-        $$.arcHeight += $$.height - $$.getGaugeLabelHeight();
+        $$.arcHeight += $$.height-($$.height*config.gauge_customheight) - $$.getGaugeLabelHeight();
     }
     if ($$.updateRadius) { $$.updateRadius(); }
 

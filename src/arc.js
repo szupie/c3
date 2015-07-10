@@ -43,10 +43,10 @@ c3_chart_internal_fn.updateAngle = function (d) {
         d.endAngle = d.startAngle;
     }
     if ($$.isGaugeType(d.data)) {
-        gTic = (Math.PI) / (gMax - gMin);
-        gValue = d.value < gMin ? 0 : d.value < gMax ? d.value - gMin : (gMax - gMin);
-        d.startAngle = -1 * (Math.PI / 2);
-        d.endAngle = d.startAngle + gTic * gValue;
+        gTic = config.gauge_angles / (gMax - gMin);
+        gValue = d.value - gMin;
+        d.startAngle = config.gauge_startangle;
+        d.endAngle = config.gauge_startangle + gTic * gValue;
     }
     return found ? d : null;
 };
@@ -95,8 +95,9 @@ c3_chart_internal_fn.transformForArcLabel = function (d) {
 };
 
 c3_chart_internal_fn.getArcRatio = function (d) {
-    var $$ = this,
-        whole = $$.hasType('gauge') ? Math.PI : (Math.PI * 2);
+    var $$ = this, config = $$.config,
+        gAngles = config.gauge_angles,
+        whole = $$.hasType('gauge') ? gAngles : (Math.PI * 2);
     return d ? (d.endAngle - d.startAngle) / whole : null;
 };
 
@@ -231,7 +232,8 @@ c3_chart_internal_fn.updateTargetsForArc = function (targets) {
         mainPieUpdate, mainPieEnter,
         classChartArc = $$.classChartArc.bind($$),
         classArcs = $$.classArcs.bind($$),
-        classFocus = $$.classFocus.bind($$);
+        classFocus = $$.classFocus.bind($$),
+        config = $$.config;
     mainPieUpdate = main.select('.' + CLASS.chartArcs).selectAll('.' + CLASS.chartArc)
         .data($$.pie(targets))
         .attr("class", function (d) { return classChartArc(d) + classFocus(d.data); });
@@ -240,7 +242,7 @@ c3_chart_internal_fn.updateTargetsForArc = function (targets) {
     mainPieEnter.append('g')
         .attr('class', classArcs);
     mainPieEnter.append("text")
-        .attr("dy", $$.hasType('gauge') ? "-.1em" : ".35em")
+        .attr("dy", $$.hasType('gauge') && config.gauge_label_offset ? "-.1em" : ".35em")
         .style("opacity", 0)
         .style("text-anchor", "middle")
         .style("pointer-events", "none");
@@ -381,8 +383,8 @@ c3_chart_internal_fn.redrawArc = function (duration, durationForExit, withTransf
             .attr("d", function () {
                 var d = {
                     data: [{value: config.gauge_max}],
-                    startAngle: -1 * (Math.PI / 2),
-                    endAngle: Math.PI / 2
+                    startAngle: config.gauge_startangle,
+                    endAngle: config.gauge_startangle+config.gauge_angles
                 };
                 return $$.getArc(d, true, true);
             });

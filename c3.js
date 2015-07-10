@@ -412,7 +412,7 @@
         $$.arcWidth = $$.width - ($$.isLegendRight ? legendWidth + 10 : 0);
         $$.arcHeight = $$.height - ($$.isLegendRight ? 0 : 10);
         if ($$.hasType('gauge')) {
-            $$.arcHeight += $$.height - $$.getGaugeLabelHeight();
+            $$.arcHeight += $$.height-($$.height*config.gauge_customheight) - $$.getGaugeLabelHeight();
         }
         if ($$.updateRadius) { $$.updateRadius(); }
 
@@ -1228,12 +1228,16 @@
             // gauge
             gauge_label_show: true,
             gauge_label_format: undefined,
+            gauge_label_offset: true,
             gauge_min: 0,
             gauge_max: 100,
             gauge_units: undefined,
             gauge_width: undefined,
             gauge_expand: {},
             gauge_expand_duration: 50,
+            gauge_angles: Math.PI,
+            gauge_startangle: -1 * (Math.PI / 2),
+            gauge_customheight: 0.5,
             // donut
             donut_label_show: true,
             donut_label_format: undefined,
@@ -4743,10 +4747,10 @@
             d.endAngle = d.startAngle;
         }
         if ($$.isGaugeType(d.data)) {
-            gTic = (Math.PI) / (gMax - gMin);
-            gValue = d.value < gMin ? 0 : d.value < gMax ? d.value - gMin : (gMax - gMin);
-            d.startAngle = -1 * (Math.PI / 2);
-            d.endAngle = d.startAngle + gTic * gValue;
+            gTic = config.gauge_angles / (gMax - gMin);
+            gValue = d.value - gMin;
+            d.startAngle = config.gauge_startangle;
+            d.endAngle = config.gauge_startangle + gTic * gValue;
         }
         return found ? d : null;
     };
@@ -4795,8 +4799,9 @@
     };
 
     c3_chart_internal_fn.getArcRatio = function (d) {
-        var $$ = this,
-            whole = $$.hasType('gauge') ? Math.PI : (Math.PI * 2);
+        var $$ = this, config = $$.config,
+            gAngles = config.gauge_angles,
+            whole = $$.hasType('gauge') ? gAngles : (Math.PI * 2);
         return d ? (d.endAngle - d.startAngle) / whole : null;
     };
 
@@ -4931,7 +4936,8 @@
             mainPieUpdate, mainPieEnter,
             classChartArc = $$.classChartArc.bind($$),
             classArcs = $$.classArcs.bind($$),
-            classFocus = $$.classFocus.bind($$);
+            classFocus = $$.classFocus.bind($$),
+            config = $$.config;
         mainPieUpdate = main.select('.' + CLASS.chartArcs).selectAll('.' + CLASS.chartArc)
             .data($$.pie(targets))
             .attr("class", function (d) { return classChartArc(d) + classFocus(d.data); });
@@ -4940,7 +4946,7 @@
         mainPieEnter.append('g')
             .attr('class', classArcs);
         mainPieEnter.append("text")
-            .attr("dy", $$.hasType('gauge') ? "-.1em" : ".35em")
+            .attr("dy", $$.hasType('gauge') && config.gauge_label_offset ? "-.1em" : ".35em")
             .style("opacity", 0)
             .style("text-anchor", "middle")
             .style("pointer-events", "none");
@@ -5081,8 +5087,8 @@
                 .attr("d", function () {
                     var d = {
                         data: [{value: config.gauge_max}],
-                        startAngle: -1 * (Math.PI / 2),
-                        endAngle: Math.PI / 2
+                        startAngle: config.gauge_startangle,
+                        endAngle: config.gauge_startangle+config.gauge_angles
                     };
                     return $$.getArc(d, true, true);
                 });
