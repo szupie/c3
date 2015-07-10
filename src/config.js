@@ -188,7 +188,7 @@ c3_chart_internal_fn.getDefaultConfig = function () {
         progressradial_max: 100,
         progressradial_units: undefined,
         progressradial_width: undefined,
-        progressradial_expand: {},
+        progressradial_expand: false,
         progressradial_expand_duration: 50,
         progressradial_angles: Math.PI*2,
         progressradial_startangle: 0,

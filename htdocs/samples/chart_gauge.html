@@ -63,7 +63,7 @@
               columns: [
                   ['data', 9.0]
               ],
-              type: 'gauge',
+              type: 'progress-radial',
           },
           gauge: {
             label: {
@@ -72,9 +72,6 @@
             },
               min: 0,
               max: 100,
-              angles: Math.PI*2,
-              startangle: 0,
-              customheight: 1,
               width: 5
           }
       });
@@ -94,11 +91,10 @@
             emptyarc: {
               ratio: 0.5
             },
-              min: 0,
-              max: 100,
-              angles: Math.PI*2,
-              startangle: 0,
               width: 20
+          },
+          tooltip: {
+            show: false
           }
       });
 
